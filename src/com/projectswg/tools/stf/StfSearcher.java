@@ -44,8 +44,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JCheckBox;
 
 import com.projectswg.tools.stf.StfTable.Pair;
-import javax.swing.border.SoftBevelBorder;
-import javax.swing.border.BevelBorder;
 import javax.swing.border.EtchedBorder;
 
 public class StfSearcher {
@@ -60,6 +58,7 @@ public class StfSearcher {
 	
 	private Preferences prefs = Preferences.userRoot().node(this.getClass().getName());
 	private JCheckBox chckbxRecursive;
+	private JCheckBox chckbxFindAll;
 	
 	public StfSearcher() {
 		searcher = this;
@@ -87,7 +86,7 @@ public class StfSearcher {
 		frmPswgTools = new JFrame();
 		frmPswgTools.setResizable(false);
 		frmPswgTools.setTitle("PSWG Tools - Stf Searcher");
-		frmPswgTools.setBounds(100, 100, 560, 514);
+		frmPswgTools.setBounds(100, 100, 571, 511);
 		frmPswgTools.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmPswgTools.getContentPane().setLayout(null);
 		
@@ -114,12 +113,12 @@ public class StfSearcher {
 		panelSettings.setLayout(null);
 		
 		JLabel lblSearchDirectory = new JLabel("Search Directory");
-		lblSearchDirectory.setBounds(10, 11, 114, 14);
+		lblSearchDirectory.setBounds(10, 11, 89, 14);
 		panelSettings.add(lblSearchDirectory);
 		
 		tfDirectory = new JTextField();
 		tfDirectory.setEditable(false);
-		tfDirectory.setBounds(124, 8, 322, 20);
+		tfDirectory.setBounds(103, 8, 336, 23);
 		panelSettings.add(tfDirectory);
 		tfDirectory.setColumns(10);
 		
@@ -152,18 +151,21 @@ public class StfSearcher {
 		panelSettings.add(btnChangeDir);
 		
 		JLabel lblSearchTerm = new JLabel("Find Value");
-		lblSearchTerm.setBounds(10, 39, 89, 14);
+		lblSearchTerm.setBounds(10, 52, 61, 14);
 		panelSettings.add(lblSearchTerm);
 		
 		tfValue = new JTextField();
 		tfValue.setColumns(10);
-		tfValue.setBounds(84, 36, 454, 20);
+		tfValue.setBounds(81, 49, 453, 23);
 		panelSettings.add(tfValue);
 		
 		JPanel panelButtons = new JPanel();
 		panelButtons.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		panelButtons.setBounds(10, 80, 528, 57);
 		panelSettings.add(panelButtons);
+		
+		chckbxFindAll = new JCheckBox("Find All");
+		panelButtons.add(chckbxFindAll);
 		
 		chckbxRecursive = new JCheckBox("Recursive");
 		panelButtons.add(chckbxRecursive);
@@ -180,7 +182,7 @@ public class StfSearcher {
 		panelButtons.add(btnClearConsole);
 		btnSearch.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				search(tfValue.getText(), chckbxRecursive.isSelected());
+				search(tfValue.getText(), chckbxRecursive.isSelected(), chckbxFindAll.isSelected());
 			}
 		});
 		
@@ -199,7 +201,7 @@ public class StfSearcher {
 
 	}
 
-	public void search(String term, boolean recursive) {
+	public void search(String term, boolean recursive, boolean findAll) {
 		printConsole("Looking for value: " + term);
 		File directory = Paths.get(searchDirectory).toFile();
 		if (!directory.exists()) {
@@ -212,26 +214,36 @@ public class StfSearcher {
 			return;
 		}
 		
-		boolean found = searchDirectory(directory, term, recursive);
+		boolean found = searchDirectory(directory, term, recursive, findAll);
 		
 		if (!found)
 			printConsole("No results were found.");
 		else
-			printConsole("Found a file with the search term.");
+			printConsole("Found the search term.");
 	}
 	
-	public boolean searchDirectory(File directory, String term, boolean recursive) {
+	public boolean searchDirectory(File directory, String term, boolean recursive, boolean findAll) {
 		boolean found = false;
-		for (File f : directory.listFiles()) {
-			if (found)
-				break;
-			
-			if (f.isFile())
-				found = searchFile(f, term);
-			else if (f.isDirectory() && recursive)
-				found = searchDirectory(f, term, recursive);
-		}
 		
+		if (!findAll) {
+			for (File f : directory.listFiles()) {
+				if (found)
+					break;
+				
+				if (f.isFile())
+					found = searchFile(f, term);
+				else if (f.isDirectory() && recursive)
+					found = searchDirectory(f, term, recursive, findAll);
+			}
+		} else {
+			for (File f : directory.listFiles()) {
+				if (f.isFile())
+					found = searchFile(f, term);
+				else if (f.isDirectory() && recursive)
+					found = searchDirectory(f, term, recursive, findAll);
+			}
+		}
+
 		return found;
 	}
 	
@@ -248,7 +260,6 @@ public class StfSearcher {
 					printConsole("Found Value in " + file.getName());
 					return true;
 				}
-				//printConsole(pair.getKey() + " " + pair.getValue());
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
