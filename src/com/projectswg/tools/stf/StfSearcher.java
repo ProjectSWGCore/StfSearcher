@@ -44,6 +44,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JCheckBox;
 
 import com.projectswg.tools.stf.StfTable.Pair;
+import javax.swing.border.SoftBevelBorder;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EtchedBorder;
 
 public class StfSearcher {
 
@@ -56,6 +59,7 @@ public class StfSearcher {
 	private JTextPane console;
 	
 	private Preferences prefs = Preferences.userRoot().node(this.getClass().getName());
+	private JCheckBox chckbxRecursive;
 	
 	public StfSearcher() {
 		searcher = this;
@@ -83,7 +87,7 @@ public class StfSearcher {
 		frmPswgTools = new JFrame();
 		frmPswgTools.setResizable(false);
 		frmPswgTools.setTitle("PSWG Tools - Stf Searcher");
-		frmPswgTools.setBounds(100, 100, 510, 442);
+		frmPswgTools.setBounds(100, 100, 560, 514);
 		frmPswgTools.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmPswgTools.getContentPane().setLayout(null);
 		
@@ -105,17 +109,17 @@ public class StfSearcher {
 		});
 		
 		JPanel panelSettings = new JPanel();
-		panelSettings.setBounds(10, 11, 474, 101);
+		panelSettings.setBounds(10, 11, 544, 143);
 		frmPswgTools.getContentPane().add(panelSettings);
 		panelSettings.setLayout(null);
 		
 		JLabel lblSearchDirectory = new JLabel("Search Directory");
-		lblSearchDirectory.setBounds(10, 11, 89, 14);
+		lblSearchDirectory.setBounds(10, 11, 114, 14);
 		panelSettings.add(lblSearchDirectory);
 		
 		tfDirectory = new JTextField();
 		tfDirectory.setEditable(false);
-		tfDirectory.setBounds(98, 8, 267, 20);
+		tfDirectory.setBounds(124, 8, 322, 20);
 		panelSettings.add(tfDirectory);
 		tfDirectory.setColumns(10);
 		
@@ -129,6 +133,7 @@ public class StfSearcher {
 			public void actionPerformed(ActionEvent arg0) {
 				JFileChooser directoryChooser = new JFileChooser();
 				directoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				directoryChooser.setDialogTitle("Search Directory");
 				
 				if (searchDirectory != null && !searchDirectory.isEmpty())
 					directoryChooser.setCurrentDirectory(Paths.get(searchDirectory).toFile());
@@ -143,7 +148,7 @@ public class StfSearcher {
 				}
 			}
 		});
-		btnChangeDir.setBounds(375, 7, 89, 23);
+		btnChangeDir.setBounds(449, 8, 89, 23);
 		panelSettings.add(btnChangeDir);
 		
 		JLabel lblSearchTerm = new JLabel("Find Value");
@@ -152,15 +157,15 @@ public class StfSearcher {
 		
 		tfValue = new JTextField();
 		tfValue.setColumns(10);
-		tfValue.setBounds(66, 36, 398, 20);
+		tfValue.setBounds(84, 36, 454, 20);
 		panelSettings.add(tfValue);
 		
 		JPanel panelButtons = new JPanel();
-		panelButtons.setBounds(10, 64, 454, 33);
+		panelButtons.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
+		panelButtons.setBounds(10, 80, 528, 57);
 		panelSettings.add(panelButtons);
 		
-		JCheckBox chckbxRecursive = new JCheckBox("Recursive");
-		chckbxRecursive.setEnabled(false);
+		chckbxRecursive = new JCheckBox("Recursive");
 		panelButtons.add(chckbxRecursive);
 		
 		JButton btnSearch = new JButton("Search");
@@ -175,12 +180,12 @@ public class StfSearcher {
 		panelButtons.add(btnClearConsole);
 		btnSearch.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				search(tfValue.getText(), false);
+				search(tfValue.getText(), chckbxRecursive.isSelected());
 			}
 		});
 		
 		JPanel panelOutput = new JPanel();
-		panelOutput.setBounds(10, 123, 474, 270);
+		panelOutput.setBounds(10, 166, 544, 299);
 		frmPswgTools.getContentPane().add(panelOutput);
 		panelOutput.setLayout(new BorderLayout(0, 0));
 		
@@ -197,12 +202,25 @@ public class StfSearcher {
 	public void search(String term, boolean recursive) {
 		printConsole("Looking for value: " + term);
 		File directory = Paths.get(searchDirectory).toFile();
-
-		if (directory.isFile()) {
-			printConsole("Tried to load a file!");
+		if (!directory.exists()) {
+			printConsole("Error: Directory no longer exists!");
 			return;
 		}
 		
+		if (directory.isFile()) {
+			printConsole("Error: Tried to load a file!");
+			return;
+		}
+		
+		boolean found = searchDirectory(directory, term, recursive);
+		
+		if (!found)
+			printConsole("No results were found.");
+		else
+			printConsole("Found a file with the search term.");
+	}
+	
+	public boolean searchDirectory(File directory, String term, boolean recursive) {
 		boolean found = false;
 		for (File f : directory.listFiles()) {
 			if (found)
@@ -210,12 +228,11 @@ public class StfSearcher {
 			
 			if (f.isFile())
 				found = searchFile(f, term);
+			else if (f.isDirectory() && recursive)
+				found = searchDirectory(f, term, recursive);
 		}
 		
-		if (!found)
-			printConsole("No results were found.");
-		else
-			printConsole("Found a file with the search term.");
+		return found;
 	}
 	
 	public boolean searchFile(File file, String term) {
