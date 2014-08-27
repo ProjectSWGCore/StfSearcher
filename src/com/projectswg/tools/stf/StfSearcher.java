@@ -29,9 +29,6 @@ import javax.swing.UIManager;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 
-import engine.clientdata.StfTable;
-import engine.clientdata.StfTable.Pair;
-
 import java.awt.BorderLayout;
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +42,8 @@ import java.awt.event.WindowListener;
 
 import javax.swing.JScrollPane;
 import javax.swing.JCheckBox;
+
+import com.projectswg.tools.stf.StfTable.Pair;
 
 public class StfSearcher {
 
