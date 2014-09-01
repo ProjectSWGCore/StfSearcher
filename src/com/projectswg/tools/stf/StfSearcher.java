@@ -18,6 +18,7 @@
  ******************************************************************************/
 package com.projectswg.tools.stf;
 
+import java.awt.Desktop;
 import java.awt.EventQueue;
 
 import javax.swing.JFileChooser;
@@ -34,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.Vector;
 import java.util.prefs.Preferences;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -44,6 +46,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JCheckBox;
 
 import com.projectswg.tools.stf.StfTable.Pair;
+
 import javax.swing.border.EtchedBorder;
 
 public class StfSearcher {
@@ -59,6 +62,8 @@ public class StfSearcher {
 	private Preferences prefs = Preferences.userRoot().node(this.getClass().getName());
 	private JCheckBox chckbxRecursive;
 	private JCheckBox chckbxFindAll;
+	
+	private Vector<String> results = new Vector<String>();
 	
 	public StfSearcher() {
 		searcher = this;
@@ -155,6 +160,7 @@ public class StfSearcher {
 		panelSettings.add(lblSearchTerm);
 		
 		tfValue = new JTextField();
+		tfValue.setToolTipText("Value that should be searched for");
 		tfValue.setColumns(10);
 		tfValue.setBounds(81, 49, 453, 23);
 		panelSettings.add(tfValue);
@@ -165,9 +171,11 @@ public class StfSearcher {
 		panelSettings.add(panelButtons);
 		
 		chckbxFindAll = new JCheckBox("Find All");
+		chckbxFindAll.setToolTipText("Finds all occurances of the value instead of breaking on first find");
 		panelButtons.add(chckbxFindAll);
 		
 		chckbxRecursive = new JCheckBox("Recursive");
+		chckbxRecursive.setToolTipText("Searches all folders in the specified directory");
 		panelButtons.add(chckbxRecursive);
 		
 		JButton btnSearch = new JButton("Search");
@@ -180,6 +188,31 @@ public class StfSearcher {
 			}
 		});
 		panelButtons.add(btnClearConsole);
+		
+		JButton btnOpenAll = new JButton("Open");
+		btnOpenAll.setToolTipText("Opens the first five (5) results");
+		btnOpenAll.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (Desktop.isDesktopSupported() && results.size() > 0) {
+					Desktop desktop = Desktop.getDesktop();
+					int count = 0;
+					for (String location : results) {
+						try {
+							if (count > 5)
+								break;
+							
+							desktop.open(Paths.get(location).toFile());
+						} catch (IOException e) {
+							printConsole(e.getLocalizedMessage());
+						}
+						count++;
+					}
+				} else {
+					printConsole("Either you have not performed a search yet or Open is not supported for your current Operating System.");
+				}
+			}
+		});
+		panelButtons.add(btnOpenAll);
 		btnSearch.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				search(tfValue.getText(), chckbxRecursive.isSelected(), chckbxFindAll.isSelected());
@@ -234,6 +267,9 @@ public class StfSearcher {
 					found = searchFile(f, term);
 				else if (f.isDirectory() && recursive)
 					found = searchDirectory(f, term, recursive, findAll);
+				
+				if (found)
+					results.add(f.getAbsolutePath());
 			}
 		} else {
 			for (File f : directory.listFiles()) {
@@ -241,6 +277,9 @@ public class StfSearcher {
 					found = searchFile(f, term);
 				else if (f.isDirectory() && recursive)
 					found = searchDirectory(f, term, recursive, findAll);
+				
+				if (found)
+					results.add(f.getAbsolutePath());
 			}
 		}
 
