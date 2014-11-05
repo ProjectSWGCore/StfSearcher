@@ -236,6 +236,10 @@ public class StfSearcher {
 
 	public void search(String term, boolean recursive, boolean findAll) {
 		printConsole("Looking for value: " + term);
+		
+		if (results.size() > 0)
+			results.clear();
+		
 		File directory = Paths.get(searchDirectory).toFile();
 		if (!directory.exists()) {
 			printConsole("Error: Directory no longer exists!");
