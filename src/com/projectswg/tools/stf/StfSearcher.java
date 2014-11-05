@@ -247,12 +247,13 @@ public class StfSearcher {
 			return;
 		}
 		
-		boolean found = searchDirectory(directory, term, recursive, findAll);
+		searchDirectory(directory, term, recursive, findAll);
 		
-		if (!found)
+		if (results.size() > 0) {
+			printConsole("Found " + results.size() + " results.");
+		} else {
 			printConsole("No results were found.");
-		else
-			printConsole("Found the search term.");
+		}
 	}
 	
 	public boolean searchDirectory(File directory, String term, boolean recursive, boolean findAll) {
@@ -296,7 +297,7 @@ public class StfSearcher {
 				String value = pair.getValue();
 
 				if (value != null && value.contains(term)) {
-					printConsole("Found Value in " + file.getName());
+					printConsole("Found Value in \\." + file.getAbsolutePath().split(searchDirectory.replace("\\", "\\\\"))[1]);
 					return true;
 				}
 			}
