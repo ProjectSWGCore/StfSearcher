@@ -19,21 +19,20 @@
 package com.projectswg.tools.stf;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import org.apache.mina.core.buffer.IoBuffer;
-
 public class StringUtilities {
-	
-	public static String getUnicodeString(IoBuffer buffer, boolean integer) {
+
+	public static String getUnicodeString(ByteBuffer buffer, boolean integer) {
 		return getString(buffer, "UTF-16LE", integer);
 	}
-	
-	public static String getAsciiString(IoBuffer buffer, boolean integer) {
+
+	public static String getAsciiString(ByteBuffer buffer, boolean integer) {
 		return getString(buffer, "US-ASCII", integer);
 	}
-	
-	private static String getString(IoBuffer buffer, String charFormat, boolean integer) {
+
+	private static String getString(ByteBuffer buffer, String charFormat, boolean integer) {
 		String result;
 		int length;
 		
